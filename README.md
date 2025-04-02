@@ -25,7 +25,7 @@ This is a real-time multi-user chat application built using Java. It enables use
 
 ## Usage
 1. **Start the Application**: Running `MainFrame.java` starts both the server and client.
-2. **Enter Username**: A prompt will ask for the username.
+2. **Enter Username**: A prompt will ask for the username.Then run `MainFrame.java` again for starting client 2.
 3. **Send Messages**: Select a user from the list and type a message.
 4. **Switch Conversations**: Click on a user's name to switch between chats.
 5. **Remove Users**: If a user disconnects, the user list updates automatically.
