@@ -17,7 +17,7 @@ This is a real-time multi-user chat application built using Java. It enables use
 ## Installation
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/chat-application.git
+   git clone https://github.com/gprernag/ChatApplication.git
    cd chat-application
    ```
 2. Open the project in your preferred Java IDE.
