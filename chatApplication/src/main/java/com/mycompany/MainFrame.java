@@ -1,13 +1,13 @@
 package com.mycompany;
 
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import javax.swing.*;
-
-import javax.swing.text.*;
 
 public class MainFrame extends JFrame implements ActionListener {
     private JTextField msgText;
@@ -16,7 +16,7 @@ public class MainFrame extends JFrame implements ActionListener {
     private DefaultListModel<String> userListModel;
     private JList<String> userList;
     private JTabbedPane chatTabs;
-    private HashMap<String, JTextPane> chatAreas; // Use JTextPane instead of JTextArea
+    private HashMap<String, JTextPane> chatAreas;
     private String selectedUser = "";
 
     private static DataInputStream din;
@@ -28,44 +28,64 @@ public class MainFrame extends JFrame implements ActionListener {
         this.userName = userName;
         chatAreas = new HashMap<>();
 
-        // Setup Frame
+        // Frame setup
         setTitle("Chat - " + userName);
-        setSize(700, 500);
+        setSize(800, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Left Panel - User List
+        // 🟪 Left Panel - User List
         userPanel = new JPanel(new BorderLayout());
         userPanel.setPreferredSize(new Dimension(200, getHeight()));
+        userPanel.setBackground(new Color(230, 230, 250)); // Lavender
 
-        JLabel chatLabel = new JLabel("Active Users");
-        chatLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel chatLabel = new JLabel("Active Users", SwingConstants.CENTER);
+        chatLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        chatLabel.setForeground(Color.BLACK);
+        chatLabel.setBorder(new EmptyBorder(10, 0, 10, 0));
 
         userListModel = new DefaultListModel<>();
         userList = new JList<>(userListModel);
+        userList.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        userList.setSelectionBackground(new Color(128, 0, 128)); // Purple
+        userList.setBorder(new EmptyBorder(5, 10, 5, 10));
+        userList.setFixedCellHeight(30);
+        userList.setOpaque(false);
+        userList.setBackground(new Color(230, 230, 250)); // Lavender
+
         userList.addListSelectionListener(e -> switchChat(userList.getSelectedValue()));
 
         userPanel.add(chatLabel, BorderLayout.NORTH);
         userPanel.add(new JScrollPane(userList), BorderLayout.CENTER);
 
-        // Right Panel - Chat Tabs
+        // 🟦 Center - Chat Tabs
         chatTabs = new JTabbedPane();
-        
-        // Bottom Panel - Input Field
+        chatTabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // 🟧 Bottom - Input Panel
         JPanel inputPanel = new JPanel(new BorderLayout());
         msgText = new JTextField();
+        msgText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        msgText.setBorder(new EmptyBorder(10, 10, 10, 10));
+
         sendButton = new JButton("Send");
+        sendButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        sendButton.setBackground(new Color(128, 0, 128)); // Purple
+        sendButton.setForeground(Color.WHITE);
+        sendButton.setFocusPainted(false);
+        sendButton.setBorder(new EmptyBorder(10, 20, 10, 20));
         sendButton.addActionListener(this);
+
+        inputPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         inputPanel.add(msgText, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
 
-        // Add Components
+        // Frame Layout
         add(userPanel, BorderLayout.WEST);
         add(chatTabs, BorderLayout.CENTER);
         add(inputPanel, BorderLayout.SOUTH);
 
         setVisible(true);
-
         startClient();
     }
 
@@ -74,7 +94,6 @@ public class MainFrame extends JFrame implements ActionListener {
             socket = new Socket("127.0.0.1", 6001);
             din = new DataInputStream(socket.getInputStream());
             dout = new DataOutputStream(socket.getOutputStream());
-
             dout.writeUTF(userName);
 
             new Thread(() -> {
@@ -88,7 +107,7 @@ public class MainFrame extends JFrame implements ActionListener {
                             if (parts.length == 2) {
                                 String sender = parts[0];
                                 String chatMessage = parts[1];
-                                appendMessage(sender, chatMessage, false); // Left-aligned for received messages
+                                appendMessage(sender, chatMessage, false);
                             }
                         }
                     }
@@ -119,6 +138,8 @@ public class MainFrame extends JFrame implements ActionListener {
     private void addChatTab(String user) {
         JTextPane chatPane = new JTextPane();
         chatPane.setEditable(false);
+        chatPane.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        chatPane.setBackground(new Color(250, 250, 250));
         chatAreas.put(user, chatPane);
         chatTabs.addTab(user, new JScrollPane(chatPane));
     }
@@ -139,8 +160,13 @@ public class MainFrame extends JFrame implements ActionListener {
 
             SimpleAttributeSet style = new SimpleAttributeSet();
             StyleConstants.setFontSize(style, 14);
-            StyleConstants.setForeground(style, isSentByMe ? Color.BLUE : Color.BLACK);
-//            StyleConstants.setAlignment(style, isSentByMe ? StyleConstants.ALIGN_RIGHT : StyleConstants.ALIGN_LEFT);
+
+            Color textColor = isSentByMe ? new Color(128, 0, 128) : Color.DARK_GRAY; // Purple for sent
+            StyleConstants.setForeground(style, textColor);
+
+            StyleConstants.setAlignment(style, isSentByMe ? StyleConstants.ALIGN_RIGHT : StyleConstants.ALIGN_LEFT);
+            StyleConstants.setLeftIndent(style, 5);
+            StyleConstants.setRightIndent(style, 5);
 
             try {
                 doc.insertString(doc.getLength(), message + "\n", style);
@@ -149,18 +175,15 @@ public class MainFrame extends JFrame implements ActionListener {
             }
         });
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
             String msg = msgText.getText().trim();
             if (!msg.isEmpty() && !selectedUser.isEmpty()) {
                 dout.writeUTF("@" + selectedUser + " " + msg);
-
-                // ✅ Show sent message immediately (right-aligned)
-                appendMessage(selectedUser, "Me -> " + selectedUser + ": " + msg, true);
-
-                msgText.setText(""); // Clear input field
+                appendMessage(selectedUser, "Me: " + msg, true);
+                msgText.setText("");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -168,7 +191,6 @@ public class MainFrame extends JFrame implements ActionListener {
     }
 
     public static void main(String[] args) {
-        new Thread(() -> ChatServer.main(args)).start();  // Start server
         String userName = JOptionPane.showInputDialog("Enter your username:");
         if (userName != null && !userName.trim().isEmpty()) {
             new MainFrame(userName.trim());

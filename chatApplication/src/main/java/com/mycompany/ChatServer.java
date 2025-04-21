@@ -11,7 +11,7 @@ public class ChatServer {
     public static void main(String[] args) {
         try {
             serverSocket = new ServerSocket(6001);
-            System.out.println("Server started...");
+            System.out.println("Server started on port 6001...");
 
             while (true) {
                 Socket socket = serverSocket.accept();
@@ -33,46 +33,41 @@ public class ChatServer {
         }
 
         public void run() {
-    try {
-        din = new DataInputStream(socket.getInputStream());
-        dout = new DataOutputStream(socket.getOutputStream());
+            try {
+                din = new DataInputStream(socket.getInputStream());
+                dout = new DataOutputStream(socket.getOutputStream());
 
-        userName = din.readUTF(); // Receive username
-        clients.put(userName, this);
-        sendUserListToAll();
+                userName = din.readUTF();
+                clients.put(userName, this);
+                sendUserListToAll();
 
-        while (true) {
-            String message = din.readUTF();
-            if (message.startsWith("@")) {
-                String[] parts = message.split(" ", 2);
-                String recipient = parts[0].substring(1);
-                String privateMessage = parts.length > 1 ? parts[1] : "";
-
-                // ✅ Send only to recipient, NOT back to sender
-                sendPrivateMessage(recipient, userName + ": " + privateMessage);
+                while (true) {
+                    String message = din.readUTF();
+                    if (message.startsWith("@")) {
+                        String[] parts = message.split(" ", 2);
+                        String recipient = parts[0].substring(1);
+                        String privateMessage = parts.length > 1 ? parts[1] : "";
+                        sendPrivateMessage(recipient, userName + ": " + privateMessage);
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println(userName + " disconnected.");
+            } finally {
+                clients.remove(userName);
+                sendUserListToAll();
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
-    } catch (IOException e) {
-        System.out.println(userName + " disconnected.");
-    } finally {
-        clients.remove(userName);
-        sendUserListToAll();
-        try {
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-}
-
-
 
         private void sendPrivateMessage(String recipient, String message) throws IOException {
-    if (clients.containsKey(recipient)) {
-        clients.get(recipient).dout.writeUTF(message); // ✅ Send message as-is
-    }
-}
-
+            if (clients.containsKey(recipient)) {
+                clients.get(recipient).dout.writeUTF(message);
+            }
+        }
 
         private void sendUserListToAll() {
             String userList = "USERS " + String.join(",", clients.keySet());
