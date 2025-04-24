@@ -10,4 +10,14 @@
         <maven.compiler.release>24</maven.compiler.release>
         <exec.mainClass>com.mycompany.ChatServer</exec.mainClass>
     </properties>
+    <dependencies>
+    <!-- Other dependencies -->
+
+    <dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.33</version>
+</dependency>
+
+</dependencies>
 </project>
