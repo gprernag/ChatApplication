@@ -1,3 +1,5 @@
+// ========================= ChatServer.java =========================
+
 package com.mycompany;
 import java.io.*;
 import java.net.*;
@@ -12,16 +14,20 @@ public class ChatServer {
     private static final String DB_PASSWORD = "123pgkg222#P"; // change if needed
     public static void main(String[] args) {
         try {
+            //Start server on port 6001
             serverSocket = new ServerSocket(6001);
             System.out.println("Server started on port 6001...");
+            // Wait for clients to connect
             while (true) {
                 Socket socket = serverSocket.accept();
+                // Handle each client in a new thread
                 new ClientHandler(socket).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    // Handles communication with one client
     static class ClientHandler extends Thread {
         private Socket socket;
         private DataInputStream din;
@@ -32,24 +38,31 @@ public class ChatServer {
         }
         public void run() {
             try {
+                 // Initialize input and output streams
                 din = new DataInputStream(socket.getInputStream());
                 dout = new DataOutputStream(socket.getOutputStream());
+                // Get client's username
                 userName = din.readUTF();
                 clients.put(userName, this);
-                // Save user to DB if not exists
+                // Add user to database if new
                 saveUserIfNew(userName);
-                // Send user list
+                // Share active user list
                 sendUserListToAll();
-                // Send chat history to the user
+                // Send previous messages to the client
                 sendChatHistoryToClient();
-                // Listen for messages
+                // Handle messages sent by the user
                 while (true) {
                     String message = din.readUTF();
                     if (message.startsWith("@")) {
+                        // Split message into recipient and actual message
                         String[] parts = message.split(" ", 2);
                         String recipient = parts[0].substring(1);
                         String privateMessage = parts.length > 1 ? parts[1] : "";
+                        
+                        // Save message to database
                         saveMessageToDB(userName, recipient, privateMessage);
+                        
+                        // Send message to recipient and echo to sender
                         sendPrivateMessage(recipient, userName + ": " + privateMessage);
                         sendPrivateMessage(userName, userName + ": " + privateMessage); // Echo to sender
                     }
@@ -66,6 +79,8 @@ public class ChatServer {
                 }
             }
         }
+        
+        // Save new user to database
         private void saveUserIfNew(String username) {
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
                 String query = "INSERT IGNORE INTO users (username) VALUES (?)";
@@ -77,6 +92,8 @@ public class ChatServer {
                 e.printStackTrace();
             }
         }
+        
+        // Store message in database
         private void saveMessageToDB(String sender, String receiver, String message) {
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
                 String query = "INSERT INTO messages (sender, receiver, message) VALUES (?, ?, ?)";
@@ -90,6 +107,8 @@ public class ChatServer {
                 e.printStackTrace();
             }
         }
+        
+        // Send all previous messages to the newly connected user
         private void sendChatHistoryToClient() {
     try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
         String query = """
@@ -113,12 +132,14 @@ public class ChatServer {
         e.printStackTrace();
     }
 }
-
+        // Send a message to a specific client
         private void sendPrivateMessage(String recipient, String message) throws IOException {
             if (clients.containsKey(recipient)) {
                 clients.get(recipient).dout.writeUTF(message);
             }
         }
+        
+        // Send current user list to all clients
         private void sendUserListToAll() {
             String userList = "USERS " + String.join(",", clients.keySet());
             for (ClientHandler client : clients.values()) {
