@@ -1,34 +1,8 @@
-# Java Chat Application
+# 💬 Java Chat Application
 
-## Overview
-This is a real-time multi-user chat application built using Java. It enables users to send private messages to each other, dynamically add or remove users, and switch conversations seamlessly.
+This is a simple multi-user private messaging application built using Java Swing for the UI, **JDBC** for database interaction, and **Java Sockets** with **multithreading** for networking and concurrency.
 
-## Features
-- **Multi-user chat**: Supports multiple users communicating via private messages.
-- **Dynamic user management**: Users can join or leave the chat dynamically.
-- **Tabbed chat interface**: Users can switch between conversations without losing messages.
-- **Automatic user list update**: The user list updates when a user joins or leaves.
-- **Single-run execution**: The server and client start together when launching the project.
-
-## Prerequisites
-- Java Development Kit (JDK) 8 or later
-- Eclipse/IntelliJ or any Java IDE
-
-## Installation
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/gprernag/ChatApplication.git
-   cd chat-application
-   ```
-2. Open the project in your preferred Java IDE.
-3. Compile and run the application.
-
-## Usage
-1. **Start the Application**: Running `MainFrame.java` starts both the server and client.
-2. **Enter Username**: A prompt will ask for the username.Then run `MainFrame.java` again for starting client 2.
-3. **Send Messages**: Select a user from the list and type a message.
-4. **Switch Conversations**: Click on a user's name to switch between chats.
-5. **Remove Users**: If a user disconnects, the user list updates automatically.
+---
 
 ## Project Structure
 ```
@@ -39,6 +13,128 @@ chat-application/
 │   │   ├── ChatServer.java
 │-- README.md
 ```
+---
 
+## 🧩 Components Explained
 
+### 🖥️ `MainFrame.java` (Client GUI)
+
+This file contains the code for the **chat application's user interface**:
+- Built using **Java Swing**.
+- Users can:
+  - Select chat partners from the sidebar.
+  - Switch between chat tabs.
+  - Send/receive private messages.
+  - View chat history after login.
+- Core GUI elements include:
+  - `JTabbedPane`: Separate chat tabs for each user.
+  - `JList`: Sidebar showing currently online users.
+  - `JTextPane`: Area to display chat messages with styling.
+
+🔗 It connects to the server via `Socket` on port **6001**.
+
+### ⚙️ `ChatServer.java` (Server Side)
+
+This is the **back-end server** which:
+- Listens for incoming client connections.
+- Creates a **new thread** for each user using the `ClientHandler` class (enables **multithreading**).
+- Handles:
+  - User registration and chat history via **JDBC and MySQL**.
+  - Receiving messages and forwarding them to the correct recipient.
+  - Broadcasting the list of currently connected users.
+
+---
+
+## 💾 Why JDBC?
+
+- Used to **connect to a MySQL database**.
+- Saves:
+  - New users in a `users` table.
+  - Each private message in a `messages` table.
+- Ensures:
+  - **Persistence**: Users can see previous chat history even after disconnecting and reconnecting.
+  - **Scalability**: Easily track and manage communication data.
+
+---
+
+## 🔁 Why Multithreading?
+
+- Each client connection is handled in a **separate thread (`ClientHandler`)**.
+- Benefits:
+  - Multiple clients can chat **simultaneously**.
+  - The server stays **responsive** and doesn't block other users while handling one.
+
+---
+
+## 🌐 Why Networking (Java Sockets)?
+
+- Enables **real-time communication** between clients and server over the network.
+- The server listens on a specific port (`6001`).
+- Clients connect via `Socket`, sending/receiving data using `DataInputStream` and `DataOutputStream`.
+
+---
+
+## 🗃️ Database Schema
+
+Make sure you have a MySQL database named `chat_app` with the following schema:
+
+```sql
+-- Users table (if not created)
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Messages table
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender VARCHAR(50) NOT NULL,
+    receiver VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender) REFERENCES users(username),
+    FOREIGN KEY (receiver) REFERENCES users(username)
+);
+```
+
+---
+
+## 🚀 How to Run
+
+### Prerequisites
+
+- Java JDK 8 or later
+- MySQL Server
+- JDBC Driver added to your classpath
+
+### 1. Start the Server
+```bash
+javac ChatServer.java
+java com.mycompany.ChatServer
+```
+
+### 2. Start the Clients
+```bash
+javac MainFrame.java
+java com.mycompany.MainFrame
+```
+
+- Enter a unique username when prompted.
+
+---
+
+## 🔐 Notes
+
+- Change database credentials in `ChatServer.java`:
+```java
+private static final String DB_USER = "your_username";
+private static final String DB_PASSWORD = "your_password";
+```
+
+---
+
+## 📷 UI Preview
+
+![Chat Application Screenshot](img.png)
 
